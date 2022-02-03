@@ -104,8 +104,8 @@ blankbg <- theme(axis.line = element_blank(),
 
 p <- ggplot() +
 
-  geom_sf(data = water,# %>%
-            #filter(name  != "Loch Ness"), # add back in if you don't want the loch
+  geom_sf(data = water %>%
+            filter(name  != "Loch Ness"), # add back in if you don't want the loch
           fill = "steelblue",
           # size = .8,
           lwd = 0,

@@ -39,7 +39,7 @@ streets <- streets_osm$osm_lines %>%
   filter(highway_group != "small" | length >= quantile(length, probs = 0.25))
 
 railways_osm <- opq(place) %>%
-  add_osm_feature(key = "railway", value ="rail") %>%
+  add_osm_feature(key = "railway", value = "rail") %>%
   osmdata_sf()
 
 railways <- railways_osm$osm_lines %>%
@@ -51,17 +51,31 @@ water_osm <- opq(place) %>%
   osmdata_sf() %>%
   unname_osmdata_sf()
 
-river_osm <- opq(place) %>%
-  add_osm_feature(key = "waterway", value = c("river")) %>%
+# bay_osm <- opq(place) %>%
+#   add_osm_feature(key = "natural", value = "bay") %>%
+#   osmdata_sf() %>%
+#   unname_osmdata_sf()
+
+
+canal_osm <- opq(place) %>%
+  add_osm_feature(key = "waterway", value = "canal") %>%
   osmdata_sf() %>%
   unname_osmdata_sf()
 
-water <- c(water_osm, river_osm) %>%
+canals <- canal_osm$osm_lines %>%
+  dplyr::select()
+
+
+river_osm <- opq(place) %>%
+  add_osm_feature(key = "waterway", value = c("river", "riverbank", "stream")) %>%
+  osmdata_sf() %>%
+  unname_osmdata_sf()
+
+water <- c(water_osm, river_osm) %>% # bay_osm removed
   .$osm_multipolygons %>%
   select(osm_id, name) %>%
-  mutate(area = st_area(.))# %>%
-# this filter gets rid of tiny isolated lakes et cetera
-#filter(area >= quantile(area, probs = 0.75))
+  mutate(area = st_area(.))
+
 
 all_boundaries <- opq(place) %>%
   add_osm_feature(key = "boundary",
@@ -82,6 +96,7 @@ boundary <- all_boundaries %>%
 streets_cropped <- streets %>% st_intersection(boundary)
 water_cropped <- water %>% st_intersection(boundary)
 railways_cropped <- railways %>% st_intersection(boundary)
+canals_cropped <- canals %>% st_intersection(boundary)
 
 
 blankbg <- theme(axis.line = element_blank(),
@@ -96,7 +111,7 @@ blankbg <- theme(axis.line = element_blank(),
                  #panel.background=element_blank(),
                  panel.grid.major = element_blank(),
                  plot.margin = unit(c(t = 1,r = 2,b = 1,l = 2), "cm"),
-                 plot.caption = element_text(color = "grey20", size = 42,
+                 plot.caption = element_text(color = "grey20", size = 32,
                                              hjust = .5, face = "plain",
                                              family = "Trebuchet MS"),
                  panel.border = element_blank()
@@ -106,8 +121,8 @@ blankbg <- theme(axis.line = element_blank(),
 
 p <- ggplot() +
 
-  geom_sf(data = water %>%
-          filter(name  != "Loch Ness"), # add back in if you don't want the loch
+  geom_sf(data = water, #%>%
+          #filter(name  != "Loch Ness"), # add back in if you don't want the loch
           fill = "steelblue",
           # size = .8,
           lwd = 0,
@@ -129,15 +144,22 @@ p <- ggplot() +
             filter(highway_group == "large"),
           size = .5,
           color = "darkslategray4") +
-  labs(caption = 'Inverness') +
+
+  geom_sf(data = canals,
+          color = "blue",
+          size = .2,
+          #linetype ="dotdash",
+          alpha = .5) +
+
+  labs(caption = 'Inverness, Loch Ness & Caledonian Canal') +
   dark_theme_minimal() +
   blankbg +
   coord_sf(
     expand = FALSE)
 
 
-ggsave("inverness-pink.png", plot = p, width = 297, height = 420, units = "mm", dpi = "retina")
-ggsave("inverness-pink-map.svg", plot = p)
+ggsave("inverness-canal.png", plot = p, width = 297, height = 420, units = "mm", dpi = "retina")
+ggsave("inverness-map.svg", plot = p)
 
 
 # with loch ness
@@ -173,11 +195,11 @@ p2 <- ggplot() +
     expand = FALSE)
 
 
-ggsave("inverness-pink-loch-ness.png",
+ggsave("inverness-loch-ness.png",
        plot = p2,
        width = 297,
        height = 420,
        units = "mm",
        dpi = "retina")
 
-ggsave("inverness-pink-loch-ness-map.svg", plot = p2)
+ggsave("inverness-loch-ness-map.svg", plot = p2)
