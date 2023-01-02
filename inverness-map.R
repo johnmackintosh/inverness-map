@@ -3,6 +3,7 @@ library(osmdata)
 library(raster)
 library(tidyverse)
 library(lwgeom)
+library(ggdark)
 
 
 place <- "Inverness Scotland"
